@@ -1,0 +1,7 @@
+canvas {
+  /*border: black 3px solid;*/
+    width  : 800px;
+    height : 500px;
+    margin : 10px;
+    border : 1px solid;
+}
