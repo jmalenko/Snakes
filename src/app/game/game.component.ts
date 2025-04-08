@@ -1,5 +1,9 @@
-import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
-import {Project, Path, Color, Point, View} from 'paper';
+import {AfterViewInit, Component, ElementRef, HostListener, ViewChild, inject} from '@angular/core';
+import {Project, Path, Color, Point, View, project} from 'paper';
+import {SnakeService} from '../services/snake.service';
+// import NodeJS from 'NodeJS';
+// import NodeJS from 'nodejs';
+// import {Timeout} from 'node';
 
 @Component({
   selector: 'app-game',
@@ -10,63 +14,48 @@ import {Project, Path, Color, Point, View} from 'paper';
 export class GameComponent implements AfterViewInit {
 
   @ViewChild('canvas') canvas: ElementRef;
+  private project: paper.Project;
 
-  // TODO Map internal coordinates to real canvas size
-  // WIDTH = 1920; // pixels
-  WIDTH = 800; // pixels
-  HEIGHT = this.WIDTH * 9 / 16; // pixels
-
-  SPEED = 200; // pixels per second
-  ANGLE = 360; // turn by this angle, per second
-
-  THICKNESS = 8; // pixels
-
-  // TODO: Change FPS to realtime
-  FPS = 5; // frames per second
-
-  snake: paper.Path;
-  head: paper.Point;
-  vector: paper.Point;
-
-  pressedKeys = new Map<string, boolean>();
+  private snakeService = inject(SnakeService);
+  private pressedKeys = new Map<string, boolean>();
+  // private intervalId: NodeJS.Timeout;
+  private intervalId: any; // TODO Fix
 
   ngAfterViewInit() {
-    const project = new Project(this.canvas.nativeElement);
+    this.project = new Project(this.canvas.nativeElement);
 
-    this.snake = new Path();
-    this.snake.strokeColor = Color.random();
-    this.snake.strokeWidth = this.THICKNESS;
+    this.snakeService.setupNewGame();
 
-    this.head = new Point(this.WIDTH / 2, 0.5 * this.HEIGHT);
-    this.vector = new Point(this.SPEED / this.FPS, 0);
-    this.snake.add(this.head);
+    this.snakeService.snakes.forEach(snake => {
+      this.project.activeLayer.addChild(snake.path);
+    });
 
-    let delay_per_frame = 1000 / this.FPS; // ms
-    setInterval(() => {
+    let delayPerFrame = 1000 / this.snakeService.FPS; // ms
+    this.intervalId = setInterval(() => {
       this.tick();
-    }, delay_per_frame);
+    }, delayPerFrame);
   }
 
   private tick() {
     console.log("Tick");
 
-    let angle_per_frame = this.ANGLE / this.FPS;
-
-    if (this.pressedKeys.get("ArrowLeft"))
-      this.vector.angle -= angle_per_frame;
-    if (this.pressedKeys.get("ArrowRight"))
-      this.vector.angle += angle_per_frame;
-
-    let newHead = this.head.add(this.vector);
-
-    if (this.detectCrash(newHead)) {
-      console.log("Crash")
-      return;
+    for (const snake of this.snakeService.snakes) {
+      if (this.pressedKeys.get("ArrowLeft")) // TODO Different controls for  each snake
+        snake.turnLeft();
+      if (this.pressedKeys.get("ArrowRight"))
+        snake.turnRight();
     }
 
-    this.head = newHead;
+    this.snakeService.tick();
 
-    this.snake.add(this.head);
+    this.draw();
+
+    // clearInterval(this.intervalId);
+  }
+
+  private draw() {
+    // this.project.clear();
+
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -79,18 +68,5 @@ export class GameComponent implements AfterViewInit {
   handleKeyUpEvent(event: KeyboardEvent) {
     console.log("Key up " + event.key + " " + event.code);
     this.pressedKeys.set(event.code, false);
-  }
-
-  detectCrash(newHead: paper.Point) {
-    for (const segment of this.snake.segments) {
-      const point = segment.point
-      const distance = newHead.getDistance(point)
-      if (distance < 10) {
-        console.log("New head " + newHead);
-        console.log("Crash point " + point);
-        return true;
-      }
-    }
-    return false;
   }
 }
