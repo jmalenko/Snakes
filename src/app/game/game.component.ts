@@ -48,14 +48,7 @@ export class GameComponent implements AfterViewInit {
 
     this.snakeService.tick();
 
-    this.draw();
-
-    // clearInterval(this.intervalId);
-  }
-
-  private draw() {
-    // this.project.clear();
-
+    // clearInterval(this.intervalId); // TODO Stop timer at the end of the game
   }
 
   @HostListener('document:keydown', ['$event'])

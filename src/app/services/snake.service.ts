@@ -1,6 +1,4 @@
 import { Injectable } from '@angular/core';
-import {Color, Path, Point} from 'paper';
-// import * as paper from 'paper';
 import paper from 'paper';
 
 @Injectable({
@@ -46,7 +44,7 @@ export class SnakeService {
       let snake = new Snake(this);
       snake.name = name;
 
-      snake.path.strokeColor = Color.random();
+      snake.path.strokeColor = paper.Color.random();
       snake.path.strokeWidth = this.THICKNESS;
 
       this.snakes.push(snake);
