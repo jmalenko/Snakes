@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import paper from 'paper';
 
 @Injectable({
@@ -19,7 +19,7 @@ export class SnakeService {
   // TODO: Change FPS to realtime
   FPS = 60; // frames per second
 
-  snakes:Snake[];
+  snakes: Snake[];
 
   constructor() {
     this.setupNewGame();
@@ -86,27 +86,32 @@ export class SnakeService {
     }
   }
 
-  isGameOver():boolean {
+  isGameOver(): boolean {
     // TODO Detect game over
-    // return this.snakes.map(snake => this.isCrashed(snake)).reduce((a, b) => a || b);
+    // return this.snakes.map(snake => snake.isCrashed()).reduce((a, b) => a || b);
     return false;
   }
 
-  isCrashed(snake:Snake):boolean {
-    return false;
-  }
+  detectCrash(snake: Snake, newHead: paper.Point) {
+    let crash = false;
 
-  detectCrash(newHead: paper.Point) {
-    // for (const segment of this.snake.segments) {
-    //   const point = segment.point
-    //   const distance = newHead.getDistance(point)
-    //   if (distance < 10) {
-    //     console.log("New head " + newHead);
-    //     console.log("Crash point " + point);
-    //     return true;
-    //   }
-    // }
-    return false;
+    this.snakes.forEach((snake2, index) => {
+      if (snake == snake2) return; // TODO Ignore just last part of the snake
+
+      for (const segment of snake2.path.segments) {
+        const point = segment.point
+        const distance = newHead.getDistance(point)
+        if (distance < 10) {
+          console.log("New head " + newHead);
+          console.log("Crash point " + point);
+          crash = true;
+        }
+      }
+    });
+
+    // TODO Detect crash with border
+
+    return crash;
   }
 }
 
@@ -116,15 +121,18 @@ class Snake {
   vector: paper.Point;
 
   game: SnakeService;
+  state: SnakeState = SnakeState.Alive;
 
-  constructor(game:SnakeService) {
+  // TODO Add state to Snake to indicate heat in intro and crash in end, faster detection of game over
+
+  constructor(game: SnakeService) {
     this.game = game;
     this.path = new paper.Path();
   }
 
   head() {
     let segments = this.path.segments;
-    return segments[segments.length-1].point;
+    return segments[segments.length - 1].point;
   }
 
   turnLeft() {
@@ -140,6 +148,9 @@ class Snake {
   }
 
   extendHead() {
+    if (this.state !== SnakeState.Alive)
+      return;
+
     let head = this.head();
 
     let vectorPerFrame = new paper.Point(this.vector);
@@ -147,11 +158,21 @@ class Snake {
 
     let newHead = head.add(vectorPerFrame);
 
-    // if (this.detectCrash(newHead)) {
-    //   console.log("Crash")
-    //   return;
-    // }
+    if (this.game.detectCrash(this, newHead)) {
+      console.log("Crash " + this.name)
+      this.state = SnakeState.Crashed;
+      return;
+    }
 
     this.path.add(newHead);
   }
+
+  isCrashed() {
+    return this.state === SnakeState.Crashed;
+  }
+}
+
+enum SnakeState {
+  Alive,
+  Crashed
 }
