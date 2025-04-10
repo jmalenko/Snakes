@@ -1,13 +1,16 @@
-import {AfterViewInit, Component, ElementRef, HostListener, ViewChild, inject} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, ViewChild, inject, signal} from '@angular/core';
 import {Project, Path, Color, Point, View, project} from 'paper';
 import {SnakeService} from '../services/snake.service';
+import {BannerComponent} from '../components/banner/banner.component';
 // import NodeJS from 'NodeJS';
 // import NodeJS from 'nodejs';
 // import {Timeout} from 'node';
 
 @Component({
   selector: 'app-game',
-  imports: [],
+  imports: [
+    BannerComponent
+  ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css'
 })
@@ -21,19 +24,54 @@ export class GameComponent implements AfterViewInit {
   // private intervalId: NodeJS.Timeout;
   private intervalId: any; // TODO Fix
 
+  state = State.Intro;
+  countdown = 3;
+  message = signal(this.countdown.toString());
+
   ngAfterViewInit() {
     this.project = new Project(this.canvas.nativeElement);
 
     this.snakeService.setupNewGame();
 
+    this.intervalId = setInterval(() => {
+      this.tickIntro();
+    }, 1000);
+  }
+
+  private tickIntro() {
+    this.countdown--;
+    this.message = signal(this.countdown.toString());
+
+    if (this.countdown == 1) {
+      this.showHeads();
+    }
+
+    if (this.countdown == 0) {
+      this.hideHeads();
+      this.message = signal("");
+      clearInterval(this.intervalId);
+
+      this.snakeService.snakes.forEach(snake => {
+        this.project.activeLayer.addChild(snake.path);
+      });
+
+      let delayPerFrame = 1000 / this.snakeService.FPS; // ms
+      this.intervalId = setInterval(() => {
+        this.tick();
+      }, delayPerFrame);
+    }
+  }
+
+  showHeads() {
+    // TODO Change to dot (instead of tick)
     this.snakeService.snakes.forEach(snake => {
       this.project.activeLayer.addChild(snake.path);
     });
+    this.snakeService.tick();
+  }
 
-    let delayPerFrame = 1000 / this.snakeService.FPS; // ms
-    this.intervalId = setInterval(() => {
-      this.tick();
-    }, delayPerFrame);
+  hideHeads() {
+    this.project.clear();
   }
 
   private tick() {
@@ -62,4 +100,10 @@ export class GameComponent implements AfterViewInit {
     console.log("Key up " + event.key + " " + event.code);
     this.pressedKeys.set(event.code, false);
   }
+}
+
+enum State {
+  Intro,
+  Play,
+  GameOver
 }
