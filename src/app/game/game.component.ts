@@ -1,5 +1,5 @@
-import {AfterViewInit, Component, ElementRef, HostListener, ViewChild, inject, signal} from '@angular/core';
-import {Project, Path} from 'paper';
+import {AfterViewInit, Component, ElementRef, HostListener, inject, signal, ViewChild} from '@angular/core';
+import {Path, Project} from 'paper';
 import {SnakeService} from '../services/snake.service';
 import {BannerComponent} from '../components/banner/banner.component';
 
@@ -28,7 +28,8 @@ export class GameComponent implements AfterViewInit {
 
   private state: State;
   private countdown: number;
-  message = signal(""); // TODO Style banner
+  message = signal("");
+  // TODO Style banner
 
   private keys = [
     ["ShiftLeft", "KeyZ"],
