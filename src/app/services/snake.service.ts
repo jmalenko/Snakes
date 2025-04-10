@@ -49,6 +49,7 @@ export class SnakeService {
 
       snake.path.strokeColor = paper.Color.random();
       snake.path.strokeWidth = this.THICKNESS;
+      snake.path.strokeCap = "round";
 
       this.snakes.push(snake);
     });

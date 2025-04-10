@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, HostListener, ViewChild, inject, signal} from '@angular/core';
-import {Project} from 'paper';
+import {Project, Path} from 'paper';
 import {SnakeService} from '../services/snake.service';
 import {BannerComponent} from '../components/banner/banner.component';
 
@@ -141,11 +141,14 @@ export class GameComponent implements AfterViewInit {
   }
 
   showHeads() {
-    // TODO Change to dot (instead of tick)
+    // Show dot
     this.snakeService.snakes.forEach(snake => {
-      this.project.activeLayer.addChild(snake.path);
+      let path = snake.path;
+      let point = path.segments[0].point;
+      let dot = new Path.Circle(point, this.snakeService.THICKNESS / 2);
+      dot.fillColor = path.strokeColor;
+      this.project.activeLayer.addChild(dot);
     });
-    this.snakeService.tick();
   }
 
   hideHeads() {
