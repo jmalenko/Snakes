@@ -114,7 +114,11 @@ export class SnakeService {
       }
     });
 
-    // TODO Detect crash with border
+    // Detect crash with border
+    if (newHead.x < 0 || this.WIDTH < newHead.x)
+      crash = true;
+    if (newHead.y < 0 || this.HEIGHT < newHead.y)
+      crash = true;
 
     // Mark winner
     if (crash) {
