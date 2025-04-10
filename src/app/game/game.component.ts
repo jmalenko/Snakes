@@ -113,6 +113,7 @@ export class GameComponent implements AfterViewInit {
 
   startGameOver() {
     this.state = State.GameOver;
+    console.log("Game over");
     this.message = signal(this.snakeService.winner
       ? "Winner is " + this.snakeService.winner.name + ". Game over."
       : "No winner. Game over.");
