@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, HostListener, ViewChild, inject, signal} from '@angular/core';
-import {Project, Path, Color, Point, View, project} from 'paper';
+import {Project} from 'paper';
 import {SnakeService} from '../services/snake.service';
 import {BannerComponent} from '../components/banner/banner.component';
 
@@ -20,9 +20,9 @@ export class GameComponent implements AfterViewInit {
   private pressedKeys = new Map<string, boolean>();
   private intervalId: any;
 
-  private state = State.Intro;
-  private countdown = 3;
-  message = signal(this.countdown.toString()); // TODO Style banner
+  private state: State;
+  private countdown:number;
+  message = signal(""); // TODO Style banner
 
   private keys = [
     ["ShiftLeft", "KeyZ"],
@@ -32,12 +32,27 @@ export class GameComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.project = new Project(this.canvas.nativeElement);
+    this.startIntro();
+  }
+
+  private startIntro() {
+    this.state = State.Intro;
 
     this.snakeService.setupNewGame();
+
+    this.project.clear();
+
+    this.countdown = 3;
+    this.message = signal(this.countdown.toString());
 
     this.intervalId = setInterval(() => {
       this.tickIntro();
     }, 1000);
+  }
+
+  private endIntro() {
+    this.message = signal("");
+    clearInterval(this.intervalId);
   }
 
   private tickIntro() {
@@ -50,32 +65,26 @@ export class GameComponent implements AfterViewInit {
 
     if (this.countdown == 0) {
       this.hideHeads();
-      this.message = signal("");
-      clearInterval(this.intervalId);
-
-      this.state = State.Game;
-
-      this.snakeService.snakes.forEach(snake => {
-        this.project.activeLayer.addChild(snake.path);
-      });
-
-      let delayPerFrame = 1000 / this.snakeService.FPS; // ms
-      this.intervalId = setInterval(() => {
-        this.tickGame();
-      }, delayPerFrame);
+      this.endIntro();
+      this.startGame();
     }
   }
 
-  showHeads() {
-    // TODO Change to dot (instead of tick)
+  startGame() {
+    this.state = State.Game;
+
     this.snakeService.snakes.forEach(snake => {
       this.project.activeLayer.addChild(snake.path);
     });
-    this.snakeService.tick();
+
+    let delayPerFrame = 1000 / this.snakeService.FPS; // ms
+    this.intervalId = setInterval(() => {
+      this.tickGame();
+    }, delayPerFrame);
   }
 
-  hideHeads() {
-    this.project.clear();
+  endGame() {
+    clearInterval(this.intervalId);
   }
 
   private tickGame() {
@@ -90,11 +99,22 @@ export class GameComponent implements AfterViewInit {
     this.snakeService.tick();
 
     if (this.snakeService.isGameOver()) {
-      clearInterval(this.intervalId);
-
-      this.state = State.GameOver;
-      this.message = signal("Game over."); // TODO Add name
+      this.endGame();
+      this.startGameOver();
     }
+  }
+
+  startGameOver() {
+    this.state = State.GameOver;
+    this.message = signal("Game over."); // TODO Add name
+
+    this.intervalId = setTimeout(() => {
+      this.endGameOver();
+    }, 1000);
+  }
+
+  endGameOver() {
+    this.startIntro();
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -107,6 +127,18 @@ export class GameComponent implements AfterViewInit {
   handleKeyUpEvent(event: KeyboardEvent) {
     // console.log("Key up " + event.key + " " + event.code);
     this.pressedKeys.set(event.code, false);
+  }
+
+  showHeads() {
+    // TODO Change to dot (instead of tick)
+    this.snakeService.snakes.forEach(snake => {
+      this.project.activeLayer.addChild(snake.path);
+    });
+    this.snakeService.tick();
+  }
+
+  hideHeads() {
+    this.project.clear();
   }
 }
 

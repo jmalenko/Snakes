@@ -87,9 +87,7 @@ export class SnakeService {
   }
 
   isGameOver(): boolean {
-    // TODO Detect game over
-    // return this.snakes.map(snake => snake.isCrashed()).reduce((a, b) => a || b);
-    return false;
+    return this.snakes.map(snake => snake.isCrashed()).reduce((a, b) => a || b);
   }
 
   detectCrash(snake: Snake, newHead: paper.Point) {
