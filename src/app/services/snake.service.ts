@@ -130,7 +130,7 @@ export class SnakeService {
           // Ignore just last part of the same snake
           path2 = new paper.Path();
           path1.segments.forEach((segment, indexSegment) => {
-            if (indexSegment == path1.segments.length - 2) {
+            if (indexSegment <= path1.segments.length - 3) {
               path2.add(segment.point);
             }
           });
