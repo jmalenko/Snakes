@@ -38,6 +38,7 @@ export class SnakeService {
   }
 
   private setupSnakes() {
+    // TODO Support up to 8 players
     const NAMES = ["Alpha", "Beta", "Gamma"];
 
     NAMES.forEach(name => {

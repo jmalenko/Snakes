@@ -20,9 +20,15 @@ export class GameComponent implements AfterViewInit {
   private pressedKeys = new Map<string, boolean>();
   private intervalId: any;
 
-  state = State.Intro;
-  countdown = 3;
+  private state = State.Intro;
+  private countdown = 3;
   message = signal(this.countdown.toString()); // TODO Style banner
+
+  private keys = [
+    ["ShiftLeft", "KeyZ"],
+    ["Comma", "Period"],
+    ["ArrowLeft", "ArrowRight"]
+  ];
 
   ngAfterViewInit() {
     this.project = new Project(this.canvas.nativeElement);
@@ -73,12 +79,13 @@ export class GameComponent implements AfterViewInit {
   }
 
   private tickGame() {
-    for (const snake of this.snakeService.snakes) {
-      if (this.pressedKeys.get("ArrowLeft")) // TODO Different controls for  each snake
+    this.snakeService.snakes.forEach((snake, index) => {
+      const keys = this.keys[index];
+      if (this.pressedKeys.get(keys[0]))
         snake.turnLeft();
-      if (this.pressedKeys.get("ArrowRight"))
+      if (this.pressedKeys.get(keys[1]))
         snake.turnRight();
-    }
+    });
 
     this.snakeService.tick();
 
@@ -92,13 +99,13 @@ export class GameComponent implements AfterViewInit {
 
   @HostListener('document:keydown', ['$event'])
   handleKeyDownEvent(event: KeyboardEvent) {
-    console.log("Key down " + event.key + " " + event.code + " " + event.keyCode);
+    // console.log("Key down " + event.key + " " + event.code + " " + event.keyCode);
     this.pressedKeys.set(event.code, true);
   }
 
   @HostListener('document:keyup', ['$event'])
   handleKeyUpEvent(event: KeyboardEvent) {
-    console.log("Key up " + event.key + " " + event.code);
+    // console.log("Key up " + event.key + " " + event.code);
     this.pressedKeys.set(event.code, false);
   }
 }
