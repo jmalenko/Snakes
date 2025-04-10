@@ -107,10 +107,9 @@ export class SnakeService {
   }
 
   detectCrashes() {
-    let crashes: Map<Snake, paper.Point> = new Map<Snake, paper.Point>();
+    let crashes: Map<Snake, Crash> = new Map<Snake, Crash>();
 
     this.snakes.forEach((snake1, index1) => {
-
       if (snake1.state != SnakeState.Alive)
         return;
 
@@ -144,39 +143,80 @@ export class SnakeService {
         if (crash) {
           let crashPoint = intersections[0].point;  // TODO Use nearest intersection
           // console.log("      Crash point = " + crashPoint);
-          crashes.set(snake1, crashPoint);
+          crashes.set(snake1, new CrashWithSnake(snake1, crashPoint, snake2));
           return
         }
       });
 
       // Detect crash with border
-      var border = new paper.Path.Rectangle(new paper.Point(0, 5), new paper.Size(this.WIDTH, this.HEIGHT));
-      let intersections = extension.getIntersections(border);
-      let crash = 0 < intersections.length;
-      if (crash) {
-        let crashPoint = intersections[0].point;
-        // console.log("      Crash point = " + crashPoint);
-        crashes.set(snake1, crashPoint);
-        return
-      }
+      const borders = [
+        new paper.Path.Line(new paper.Point(0, 0), new paper.Size(this.WIDTH, 0)),
+        new paper.Path.Line(new paper.Size(this.WIDTH, 0), new paper.Point(this.WIDTH, this.HEIGHT)),
+        new paper.Path.Line(new paper.Point(this.WIDTH, this.HEIGHT), new paper.Point(0, this.HEIGHT)),
+        new paper.Path.Line(new paper.Size(0, this.HEIGHT), new paper.Point(0, 0))
+      ];
+      borders.forEach((border) => {
+        let intersections = extension.getIntersections(border);
+        let crash = 0 < intersections.length;
+        if (crash) {
+          let crashPoint = intersections[0].point;
+          // console.log("      Crash point = " + crashPoint);
+          crashes.set(snake1, new CrashWithWall(snake1, crashPoint, border));
+          return
+        }
+      });
     });
 
     // Update crashed snakes
-    crashes.forEach((point, snake) => {
-      console.log(snake.name + " crashed");
+    crashes.forEach((crash, snake) => {
+      console.log(snake.name + ": Crashed");
 
       snake.state = SnakeState.Crashed;
 
-      // Move the head to crash point
+      // Move head
+      let newHead: paper.Point;
+
+      // Method 1: just use the crashPoint (the center of the snake body)
+      newHead = crash.crashPoint;
+      console.log(snake.name + ": Moving head. Crash point = " + crash.crashPoint + ", new head = " + newHead)
       snake.path.removeSegment(snake.path.segments.length - 1);
-      snake.path.add(point);
+      snake.path.add(newHead);
+
+      // Method 2: Move the head to crash crashPoint
+      // let crashPath: paper.Path;
+      // let distanceThreshold: number;
+      // if (crash instanceof CrashWithSnake) {
+      //   crashPath = crash.snake2.path;
+      //   distanceThreshold = this.THICKNESS;
+      // } else if (crash instanceof CrashWithWall) {
+      //   crashPath = crash.wall;
+      //   distanceThreshold = this.THICKNESS / 2;
+      // } else {
+      //   throw new Error("Unsupported crash type");
+      // }
+      // let newHeadOffset = snake.path.getOffsetOf(crash.crashPoint);
+      // while (true) {
+      //   newHead = snake.path.getPointAt(newHeadOffset);
+      //   const nearest = crashPath.getNearestPoint(newHead);
+      //   const distToPath2 = newHead.getDistance(nearest);
+      //
+      //   if (distToPath2 > distanceThreshold) {
+      //     break;
+      //   }
+      //   newHeadOffset -= 0.5;
+      // }
+      // console.log(snake.name + ": Moving head. Crash point = " + crash.crashPoint + ", new head = " + newHead)
+      // let extension = snake.path.splitAt(newHeadOffset);
+      // if (extension) {
+      //   extension.remove();
+      // }
     });
   }
 
   detectWinner() {
     if (this.winner != null)
       return;
-    
+
     let remainingSnakes = this.getAliveSnakes();
     if (remainingSnakes.length == 1) {
       this.winner = remainingSnakes[0];
@@ -205,8 +245,6 @@ class Snake {
 
   game: SnakeService;
   state: SnakeState = SnakeState.Alive;
-
-  // TODO Add last point in case of crash, that is touching the snake
 
   constructor(game: SnakeService) {
     this.game = game;
@@ -245,4 +283,32 @@ class Snake {
 enum SnakeState {
   Alive,
   Crashed
+}
+
+class Crash {
+  snake: Snake;
+  crashPoint: paper.Point;
+
+  constructor(snake: Snake, crashPoint: paper.Point) {
+    this.snake = snake;
+    this.crashPoint = crashPoint;
+  }
+}
+
+class CrashWithSnake extends Crash {
+  snake2: Snake;
+
+  constructor(snake: Snake, crashPoint: paper.Point, snake2: Snake) {
+    super(snake, crashPoint);
+    this.snake2 = snake2;
+  }
+}
+
+class CrashWithWall extends Crash {
+  wall: paper.Path;
+
+  constructor(snake: Snake, crashPoint: paper.Point, wall: paper.Path) {
+    super(snake, crashPoint);
+    this.wall = wall;
+  }
 }
