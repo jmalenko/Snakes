@@ -20,6 +20,7 @@ export class SnakeService {
   FPS = 60; // frames per second
 
   snakes: Snake[];
+  winner: Snake | null;
 
   constructor() {
     this.setupNewGame();
@@ -33,6 +34,7 @@ export class SnakeService {
     paper.setup([this.WIDTH, this.HEIGHT]);
 
     // Setup
+    this.winner = null;
     this.setupSnakes()
     this.setupStartPositions();
   }
@@ -87,7 +89,12 @@ export class SnakeService {
   }
 
   isGameOver(): boolean {
-    return this.snakes.map(snake => snake.isCrashed()).reduce((a, b) => a || b);
+    return this.getAliveSnakes().length == 0;
+  }
+
+  getAliveSnakes(): Snake[] {
+    return this.snakes
+      .filter(snake => snake.state == SnakeState.Alive)
   }
 
   detectCrash(snake: Snake, newHead: paper.Point) {
@@ -109,6 +116,15 @@ export class SnakeService {
 
     // TODO Detect crash with border
 
+    // Mark winner
+    if (crash) {
+      let remainingSnakes = this.getAliveSnakes();
+      remainingSnakes = remainingSnakes.filter(snake2 => snake2 != snake);
+      if (remainingSnakes.length == 1) {
+        this.winner = remainingSnakes[0];
+      }
+    }
+
     return crash;
   }
 }
@@ -121,7 +137,7 @@ class Snake {
   game: SnakeService;
   state: SnakeState = SnakeState.Alive;
 
-  // TODO Add state to Snake to indicate heat in intro and crash in end, faster detection of game over
+  // TODO Add state to Snake to indicate head in intro and crash in end, faster detection of game over
 
   constructor(game: SnakeService) {
     this.game = game;
@@ -163,10 +179,6 @@ class Snake {
     }
 
     this.path.add(newHead);
-  }
-
-  isCrashed() {
-    return this.state === SnakeState.Crashed;
   }
 }
 

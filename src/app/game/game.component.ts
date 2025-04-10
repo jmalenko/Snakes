@@ -2,6 +2,7 @@ import {AfterViewInit, Component, ElementRef, HostListener, ViewChild, inject, s
 import {Project} from 'paper';
 import {SnakeService} from '../services/snake.service';
 import {BannerComponent} from '../components/banner/banner.component';
+import assert from 'node:assert';
 
 @Component({
   selector: 'app-game',
@@ -21,7 +22,7 @@ export class GameComponent implements AfterViewInit {
   private intervalId: any;
 
   private state: State;
-  private countdown:number;
+  private countdown: number;
   message = signal(""); // TODO Style banner
 
   private keys = [
@@ -98,6 +99,10 @@ export class GameComponent implements AfterViewInit {
 
     this.snakeService.tick();
 
+    if (this.snakeService.winner != null) {
+      this.message = signal("Winner is " + this.snakeService.winner.name + ".");
+    }
+
     if (this.snakeService.isGameOver()) {
       this.endGame();
       this.startGameOver();
@@ -106,7 +111,8 @@ export class GameComponent implements AfterViewInit {
 
   startGameOver() {
     this.state = State.GameOver;
-    this.message = signal("Game over."); // TODO Add name
+    assert(this.snakeService.winner != null)
+    this.message = signal("Winner is " + this.snakeService.winner.name + ". Game over.");
 
     this.intervalId = setTimeout(() => {
       this.endGameOver();
