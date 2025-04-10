@@ -17,7 +17,7 @@ export class SnakeService {
   THICKNESS = 8; // pixels
 
   // TODO: Change FPS to realtime
-  FPS = 5; // frames per second
+  FPS = 60; // frames per second
 
   snakes:Snake[];
 
@@ -83,6 +83,16 @@ export class SnakeService {
     for (const snake of this.snakes) {
       snake.extendHead();
     }
+  }
+
+  isGameOver():boolean {
+    // TODO Detect game over
+    // return this.snakes.map(snake => this.isCrashed(snake)).reduce((a, b) => a || b);
+    return false;
+  }
+
+  isCrashed(snake:Snake):boolean {
+    return false;
   }
 
   detectCrash(newHead: paper.Point) {

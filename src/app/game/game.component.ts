@@ -2,9 +2,6 @@ import {AfterViewInit, Component, ElementRef, HostListener, ViewChild, inject, s
 import {Project, Path, Color, Point, View, project} from 'paper';
 import {SnakeService} from '../services/snake.service';
 import {BannerComponent} from '../components/banner/banner.component';
-// import NodeJS from 'NodeJS';
-// import NodeJS from 'nodejs';
-// import {Timeout} from 'node';
 
 @Component({
   selector: 'app-game',
@@ -21,12 +18,11 @@ export class GameComponent implements AfterViewInit {
 
   private snakeService = inject(SnakeService);
   private pressedKeys = new Map<string, boolean>();
-  // private intervalId: NodeJS.Timeout;
-  private intervalId: any; // TODO Fix
+  private intervalId: any;
 
   state = State.Intro;
   countdown = 3;
-  message = signal(this.countdown.toString());
+  message = signal(this.countdown.toString()); // TODO Style banner
 
   ngAfterViewInit() {
     this.project = new Project(this.canvas.nativeElement);
@@ -51,13 +47,15 @@ export class GameComponent implements AfterViewInit {
       this.message = signal("");
       clearInterval(this.intervalId);
 
+      this.state = State.Game;
+
       this.snakeService.snakes.forEach(snake => {
         this.project.activeLayer.addChild(snake.path);
       });
 
       let delayPerFrame = 1000 / this.snakeService.FPS; // ms
       this.intervalId = setInterval(() => {
-        this.tick();
+        this.tickGame();
       }, delayPerFrame);
     }
   }
@@ -74,9 +72,7 @@ export class GameComponent implements AfterViewInit {
     this.project.clear();
   }
 
-  private tick() {
-    console.log("Tick");
-
+  private tickGame() {
     for (const snake of this.snakeService.snakes) {
       if (this.pressedKeys.get("ArrowLeft")) // TODO Different controls for  each snake
         snake.turnLeft();
@@ -86,7 +82,12 @@ export class GameComponent implements AfterViewInit {
 
     this.snakeService.tick();
 
-    // clearInterval(this.intervalId); // TODO Stop timer at the end of the game
+    if (this.snakeService.isGameOver()) {
+      clearInterval(this.intervalId);
+
+      this.state = State.GameOver;
+      this.message = signal("Game over."); // TODO Add name
+    }
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -104,6 +105,6 @@ export class GameComponent implements AfterViewInit {
 
 enum State {
   Intro,
-  Play,
+  Game,
   GameOver
 }
