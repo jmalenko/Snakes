@@ -2,7 +2,12 @@ import {AfterViewInit, Component, ElementRef, HostListener, ViewChild, inject, s
 import {Project} from 'paper';
 import {SnakeService} from '../services/snake.service';
 import {BannerComponent} from '../components/banner/banner.component';
-import assert from 'node:assert';
+
+function assert(condition: any, message?: string): asserts condition {
+  if (!condition) {
+    throw new Error(message || "Assertion failed");
+  }
+}
 
 @Component({
   selector: 'app-game',
@@ -146,6 +151,7 @@ export class GameComponent implements AfterViewInit {
   hideHeads() {
     this.project.clear();
   }
+
 }
 
 enum State {
