@@ -44,6 +44,8 @@ export class GameComponent implements AfterViewInit {
   private startIntro() {
     this.state = State.Intro;
 
+    console.log("=== New game ===");
+
     this.snakeService.setupNewGame();
 
     this.project.clear();

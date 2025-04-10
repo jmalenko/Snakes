@@ -19,6 +19,22 @@ export class SnakeService {
   // TODO: Change FPS to realtime
   FPS = 60; // frames per second
 
+  /*
+  When a path crosses another path...
+                  0
+                  |
+                  |
+                  |
+                  |
+    ---0----------+----------0---
+                  |        /
+                  |      /
+                  |    / THRESHOLD
+                  |  /
+                  0/
+   */
+  THRESHOLD = this.SPEED / this.FPS / Math.sqrt(2);
+
   snakes: Snake[];
   winner: Snake | null;
 
@@ -66,7 +82,6 @@ export class SnakeService {
     const center = new paper.Point(this.WIDTH / 2, this.HEIGHT / 2);
 
     this.snakes.forEach((snake, index) => {
-      // console.log(index + ": " + snake.name);
       let vectorCenterToHead = new paper.Point(radius, 0);
       vectorCenterToHead.angle = ANGLE1 + 360 / this.getNumberOfSnakes() * index;
 
@@ -102,24 +117,26 @@ export class SnakeService {
     let crash = false;
 
     this.snakes.forEach((snake2, index) => {
-      if (snake == snake2) return; // TODO Ignore just last part of the snake
-
-      for (const segment of snake2.path.segments) {
-        const point = segment.point
+      snake2.path.segments.forEach((segment2, index2) => {
+        const point = segment2.point
         const distance = newHead.getDistance(point)
-        if (distance < 10) {
-          console.log("New head " + newHead);
-          console.log("Crash point " + point);
+        if (distance <= this.THRESHOLD) {
+          console.log("Crash: newHead=" + newHead + ", point=" + point);
           crash = true;
         }
-      }
+      });
     });
 
     // Detect crash with border
-    if (newHead.x < 0 || this.WIDTH < newHead.x)
+    if (newHead.x < 0 || this.WIDTH < newHead.x ||
+        newHead.y < 0 || this.HEIGHT < newHead.y) {
+      console.log("Crash: wall");
       crash = true;
-    if (newHead.y < 0 || this.HEIGHT < newHead.y)
-      crash = true;
+    }
+
+    if (crash) {
+      console.log(snake.name + " crashed.");
+    }
 
     // Mark winner
     if (crash) {
@@ -127,6 +144,7 @@ export class SnakeService {
       remainingSnakes = remainingSnakes.filter(snake2 => snake2 != snake);
       if (remainingSnakes.length == 1) {
         this.winner = remainingSnakes[0];
+        console.log("Winner is " + this.winner.name);
       }
     }
 
@@ -142,7 +160,7 @@ class Snake {
   game: SnakeService;
   state: SnakeState = SnakeState.Alive;
 
-  // TODO Add state to Snake to indicate head in intro and crash in end, faster detection of game over
+  // TODO Add last point in case of crash, that is touching the snake
 
   constructor(game: SnakeService) {
     this.game = game;
@@ -178,7 +196,6 @@ class Snake {
     let newHead = head.add(vectorPerFrame);
 
     if (this.game.detectCrash(this, newHead)) {
-      console.log("Crash " + this.name)
       this.state = SnakeState.Crashed;
       return;
     }
