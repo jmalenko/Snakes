@@ -3,12 +3,6 @@ import {Path, Project} from 'paper';
 import {SnakeService} from '../services/snake.service';
 import {BannerComponent} from '../components/banner/banner.component';
 
-function assert(condition: any, message?: string): asserts condition {
-  if (!condition) {
-    throw new Error(message || "Assertion failed");
-  }
-}
-
 @Component({
   selector: 'app-game',
   imports: [
@@ -119,8 +113,9 @@ export class GameComponent implements AfterViewInit {
 
   startGameOver() {
     this.state = State.GameOver;
-    assert(this.snakeService.winner != null)
-    this.message = signal("Winner is " + this.snakeService.winner.name + ". Game over.");
+    this.message = signal(this.snakeService.winner
+      ? "Winner is " + this.snakeService.winner.name + ". Game over."
+      : "No winner. Game over.");
 
     this.intervalId = setTimeout(() => {
       this.endGameOver();
