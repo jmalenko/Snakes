@@ -1,5 +1,6 @@
 import {Injectable} from '@angular/core';
 import paper from 'paper';
+import {assert} from '../utils/assert';
 
 @Injectable({
   providedIn: 'root'
@@ -141,7 +142,29 @@ export class SnakeService {
         let intersections = extension.getIntersections(path2);
         let crash = 0 < intersections.length;
         if (crash) {
-          let crashPoint = intersections[0].point;  // TODO Use nearest intersection
+          // Find nearest intersection
+          let previousHead = snake1.path.segments[snake1.path.segments.length - 2];
+          let crashPoint: paper.Point|undefined = undefined;
+          let distance: number|undefined = undefined;
+          intersections.forEach((intersection) => {
+            let distanceI = previousHead.point.getDistance(intersection.point);
+            if (distance == undefined || distanceI < distance) {
+              crashPoint = intersection.point;
+              distance = distanceI;
+            }
+          });
+          assert(crashPoint != null);
+          assert(distance != null);
+
+          // Check there's no nearer crash
+          let crash1 = crashes.get(snake1)
+          if (crash1 != null) {
+            let distanceI = previousHead.point.getDistance(crash1.crashPoint);
+            if (distanceI < distance) {
+              return
+            }
+          }
+
           // console.log("      Crash point = " + crashPoint);
           crashes.set(snake1, new CrashWithSnake(snake1, crashPoint, snake2));
           return
