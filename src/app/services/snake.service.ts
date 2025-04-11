@@ -120,7 +120,7 @@ export class SnakeService {
       extension.add(path1.segments[path1.segments.length - 2]);
       extension.add(path1.segments[path1.segments.length - 1]);
 
-      // console.log(snake1.name + ", extension=" + this.pathToString(extension));
+      // console.log(snake1.name + ": extension=" + this.pathToString(extension));
 
       // Detect crash with snakes
       // Algorithm: Check intersection of the extension (head, new head candidate) with the path of snakes.
@@ -137,7 +137,7 @@ export class SnakeService {
           // TODO Do we need to remove this path (to prevent memory leaks)?
         } else path2 = snake2.path
 
-        // console.log("   " + snake2.name + ", path=" + this.pathToString(path2));
+        // console.log("   " + snake2.name + ": path=" + this.pathToString(path2));
 
         let intersections = extension.getIntersections(path2);
         let crash = 0 < intersections.length;
@@ -165,7 +165,7 @@ export class SnakeService {
             }
           }
 
-          // console.log("      Crash point = " + crashPoint);
+          // console.log(snake1.name + ":      Crash point = " + crashPoint);
           crashes.set(snake1, new CrashWithSnake(snake1, crashPoint, snake2));
           return
         }
@@ -183,7 +183,7 @@ export class SnakeService {
         let crash = 0 < intersections.length;
         if (crash) {
           let crashPoint = intersections[0].point;
-          // console.log("      Crash point = " + crashPoint);
+          // console.log(snake1.name + ":      Crash point = " + crashPoint);
           crashes.set(snake1, new CrashWithWall(snake1, crashPoint, border));
           return
         }
@@ -201,8 +201,8 @@ export class SnakeService {
 
       // Method 1: just use the crashPoint (the center of the snake body)
       newHead = crash.crashPoint;
-      console.log(snake.name + ": Moving head. Crash point = " + crash.crashPoint + ", new head = " + newHead)
-      snake.path.removeSegment(snake.path.segments.length - 1);
+      let candidateHead = snake.path.removeSegment(snake.path.segments.length - 1);
+      console.log(snake.name + ": Moving head. Crash point = " + crash.crashPoint + ", candidate head = " + candidateHead.point + ", new head = " + newHead)
       snake.path.add(newHead);
 
       // Method 2: Move the head to crash crashPoint
