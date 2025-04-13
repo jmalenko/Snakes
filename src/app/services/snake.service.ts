@@ -120,7 +120,7 @@ export class SnakeService {
   detectCrashes() {
     let crashes: Map<Snake, Crash> = new Map<Snake, Crash>();
 
-    this.snakes.forEach((snake1, index1) => {
+    this.snakes.forEach((snake1) => {
       if (snake1.state != SnakeState.Alive)
         return;
 
