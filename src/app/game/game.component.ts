@@ -22,7 +22,8 @@ export class GameComponent implements AfterViewInit {
 
   private state: State;
   private countdown: number;
-  message = signal("");
+  message = signal("Start a new game by adding players. Add player by pressing it's control key.");
+
   // TODO Style banner
 
   // TODO Support own name and color
@@ -67,7 +68,7 @@ export class GameComponent implements AfterViewInit {
     }, 1000);
   }
 
-  private updateMessageDuringIntroCountdown () {
+  private updateMessageDuringIntroCountdown() {
     let message = this.countdown.toString();
     message += " Snakes: "
     this.snakeService.snakes.forEach((snake, index) => {
@@ -200,7 +201,7 @@ export class GameComponent implements AfterViewInit {
     this.handleUpEvent(code);
   }
 
-  handleDownEvent(code:string) {
+  handleDownEvent(code: string) {
     switch (this.state) {
       case State.Intro:
         const startCountdown = this.snakeService.getNumberOfSnakes() == 0;
