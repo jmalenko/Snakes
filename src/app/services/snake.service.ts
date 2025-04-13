@@ -144,8 +144,8 @@ export class SnakeService {
               path2.add(segment.point);
             }
           });
-          // TODO Do we need to remove this path (to prevent memory leaks)?
-        } else path2 = snake2.path
+        } else
+          path2 = snake2.path
 
         // console.log("   " + snake2.name + ": path=" + this.pathToString(path2));
 
