@@ -24,36 +24,34 @@ export class SnakeService {
   winner: Snake | null;
 
   constructor() {
-    this.setupNewGame();
+    this.initGame();
   }
 
-  setupNewGame() {
-    // Clean
+  initGame() {
     this.snakes = [];
-
-    // paper.install(this);
-    paper.setup([this.WIDTH, this.HEIGHT]);
-
-    // Setup
     this.winner = null;
-    this.setupSnakes()
+
+    paper.setup([this.WIDTH, this.HEIGHT]);
+  }
+
+  addSnake(name: string, control: SnakeControl) {
+    let snake = new Snake(this);
+    snake.name = name;
+    snake.control = control;
+
+    snake.path.strokeColor = paper.Color.random();
+    snake.path.strokeWidth = this.THICKNESS;
+    snake.path.strokeCap = "round";
+
+    this.snakes.push(snake);
+
     this.setupStartPositions();
   }
 
-  private setupSnakes() {
-    // TODO Support up to 8 players
-    const NAMES = ["Alpha", "Beta", "Gamma"];
-
-    NAMES.forEach(name => {
-      let snake = new Snake(this);
-      snake.name = name;
-
-      snake.path.strokeColor = paper.Color.random();
-      snake.path.strokeWidth = this.THICKNESS;
-      snake.path.strokeCap = "round";
-
-      this.snakes.push(snake);
-    });
+  startGame() {
+    if (this.getNumberOfSnakes() < 1) {
+      throw new Error("There must be at least one snake.");
+    }
   }
 
   private setupStartPositions() {
@@ -67,8 +65,12 @@ export class SnakeService {
     const center = new paper.Point(this.WIDTH / 2, this.HEIGHT / 2);
 
     this.snakes.forEach((snake, index) => {
+      // The snakes that were added earlier have the head already. Remove it first.
+      if (0 < snake.path.segments.length)
+        snake.path.segments=[];
+
       let vectorCenterToHead = new paper.Point(radius, 0);
-      vectorCenterToHead.angle = ANGLE1 + 360 / this.getNumberOfSnakes() * index;
+      vectorCenterToHead.angle = ANGLE1 + 360 / this.snakes.length * index;
 
       let head = center.add(vectorCenterToHead);
       snake.path.add(head);
@@ -81,6 +83,14 @@ export class SnakeService {
 
   getNumberOfSnakes() {
     return this.snakes.length;
+  }
+
+  getSnakeByName(name: string) {
+    for (let snake of this.snakes) {
+      if (snake.name == name)
+        return snake;
+    }
+    return null;
   }
 
   tick() {
@@ -144,8 +154,8 @@ export class SnakeService {
         if (crash) {
           // Find nearest intersection
           let previousHead = snake1.path.segments[snake1.path.segments.length - 2];
-          let crashPoint: paper.Point|undefined = undefined;
-          let distance: number|undefined = undefined;
+          let crashPoint: paper.Point | undefined = undefined;
+          let distance: number | undefined = undefined;
           intersections.forEach((intersection) => {
             let distanceI = previousHead.point.getDistance(intersection.point);
             if (distance == undefined || distanceI < distance) {
@@ -269,6 +279,8 @@ class Snake {
   game: SnakeService;
   state: SnakeState = SnakeState.Alive;
 
+  control: SnakeControl;
+
   constructor(game: SnakeService) {
     this.game = game;
     this.path = new paper.Path();
@@ -306,6 +318,16 @@ class Snake {
 enum SnakeState {
   Alive,
   Crashed
+}
+
+export class SnakeControl {
+  left: string;
+  right: string;
+
+  constructor(left: string, right: string) {
+    this.left = left;
+    this.right = right;
+  }
 }
 
 class Crash {

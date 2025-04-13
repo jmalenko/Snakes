@@ -1,6 +1,6 @@
 import {AfterViewInit, Component, ElementRef, HostListener, inject, signal, ViewChild} from '@angular/core';
 import {Path, Project} from 'paper';
-import {SnakeService} from '../services/snake.service';
+import {SnakeControl, SnakeService} from '../services/snake.service';
 import {BannerComponent} from '../components/banner/banner.component';
 
 @Component({
@@ -25,10 +25,20 @@ export class GameComponent implements AfterViewInit {
   message = signal("");
   // TODO Style banner
 
+  // TODO Support own name and color
+  private names = ["Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Mu"];
+
   private keys = [
-    ["ShiftLeft", "KeyZ"],
-    ["Comma", "Period"],
-    ["ArrowLeft", "ArrowRight"]
+    new SnakeControl("Backquote", "Tab"),
+    new SnakeControl("ShiftLeft", "ControlLeft"),
+    new SnakeControl("AltLeft", "Space"),
+    new SnakeControl("KeyV", "KeyB"),
+    new SnakeControl("Comma", "Period"),
+    new SnakeControl("ShiftRight", "ControlRight"), // untested
+    new SnakeControl("ArrowLeft", "ArrowRight"),
+    new SnakeControl("0", "."), // untested
+    new SnakeControl("+", "-"), // untested
+    new SnakeControl("MouseButton0", "MouseButton2") // left and right mouse buttons
   ];
 
   ngAfterViewInit() {
@@ -39,18 +49,34 @@ export class GameComponent implements AfterViewInit {
   private startIntro() {
     this.state = State.Intro;
 
-    console.log("=== New game ===");
-
-    this.snakeService.setupNewGame();
-
     this.project.clear();
 
+    console.log("=== Intro ===");
+
+    this.snakeService.initGame();
+    this.message = signal("Start a new game by adding players. Add player by pressing it's control key.");
+  }
+
+  // Countdown starts when the first snake is added
+  private startIntroCountdown() {
     this.countdown = 3;
-    this.message = signal(this.countdown.toString());
+    this.updateMessageDuringIntroCountdown();
 
     this.intervalId = setInterval(() => {
       this.tickIntro();
     }, 1000);
+  }
+
+  private updateMessageDuringIntroCountdown () {
+    let message = this.countdown.toString();
+    message += " Snakes: "
+    this.snakeService.snakes.forEach((snake, index) => {
+      if (0 < index)
+        message += ", ";
+      message += snake.name;
+    });
+    message += ". Add player by pressing it's control key."
+    this.message = signal(message);
   }
 
   private endIntro() {
@@ -60,7 +86,7 @@ export class GameComponent implements AfterViewInit {
 
   private tickIntro() {
     this.countdown--;
-    this.message = signal(this.countdown.toString());
+    this.updateMessageDuringIntroCountdown();
 
     if (this.countdown == 1) {
       this.showHeads();
@@ -73,9 +99,31 @@ export class GameComponent implements AfterViewInit {
     }
   }
 
+  private addPlayerWithKey(keyCode: string) {
+    if (this.state != State.Intro)
+      throw new Error("Cannot add player when not in intro.");
+
+    this.keys.forEach((control, index) => {
+      if (control.left == keyCode || control.right == keyCode) {
+        let name = this.names[index];
+
+        // If a snake with this control exists, then don't add a new one
+        if (this.snakeService.getSnakeByName(name))
+          return;
+
+        console.log("Adding snake: " + name);
+        this.snakeService.addSnake(name, control);
+      }
+    })
+  }
+
   startGame() {
+    console.log("=== Start game ===");
     this.state = State.Game;
 
+    this.snakeService.startGame();
+
+    // Show snake bodies (paths) in canvas
     this.snakeService.snakes.forEach(snake => {
       this.project.activeLayer.addChild(snake.path);
     });
@@ -91,11 +139,10 @@ export class GameComponent implements AfterViewInit {
   }
 
   private tickGame() {
-    this.snakeService.snakes.forEach((snake, index) => {
-      const keys = this.keys[index];
-      if (this.pressedKeys.get(keys[0]))
+    this.snakeService.snakes.forEach((snake) => {
+      if (this.pressedKeys.get(snake.control.left))
         snake.turnLeft();
-      if (this.pressedKeys.get(keys[1]))
+      if (this.pressedKeys.get(snake.control.right))
         snake.turnRight();
     });
 
@@ -130,13 +177,56 @@ export class GameComponent implements AfterViewInit {
   @HostListener('document:keydown', ['$event'])
   handleKeyDownEvent(event: KeyboardEvent) {
     // console.log("Key down " + event.key + " " + event.code + " " + event.keyCode);
-    this.pressedKeys.set(event.code, true);
+    this.handleDownEvent(event.code);
   }
 
   @HostListener('document:keyup', ['$event'])
   handleKeyUpEvent(event: KeyboardEvent) {
     // console.log("Key up " + event.key + " " + event.code);
-    this.pressedKeys.set(event.code, false);
+    this.handleUpEvent(event.code);
+  }
+
+  @HostListener('document:mousedown', ['$event'])
+  handleMouseDownEvent(event: MouseEvent) {
+    // console.log("Mouse down " + event.button);
+    const code = "MouseButton" + event.button;
+    this.handleDownEvent(code);
+  }
+
+  @HostListener('document:mouseup', ['$event'])
+  handleMouseUpEvent(event: MouseEvent) {
+    // console.log("Mouse up " + event.button);
+    const code = "MouseButton" + event.button;
+    this.handleUpEvent(code);
+  }
+
+  handleDownEvent(code:string) {
+    switch (this.state) {
+      case State.Intro:
+        const startCountdown = this.snakeService.getNumberOfSnakes() == 0;
+        this.addPlayerWithKey(code);
+        if (startCountdown)
+          this.startIntroCountdown();
+        if (this.countdown == 1) {
+          this.hideHeads();
+          this.showHeads();
+        }
+        this.updateMessageDuringIntroCountdown();
+        break;
+      case State.Game:
+        this.pressedKeys.set(code, true);
+        break;
+      case State.GameOver:
+    }
+  }
+
+  handleUpEvent(code: string) {
+    this.pressedKeys.set(code, false);
+  }
+
+  @HostListener('contextmenu', ['$event'])
+  onRightClick(event: Event) {
+    event.preventDefault();
   }
 
   showHeads() {
@@ -153,7 +243,6 @@ export class GameComponent implements AfterViewInit {
   hideHeads() {
     this.project.clear();
   }
-
 }
 
 enum State {
