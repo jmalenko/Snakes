@@ -1,1 +1,3 @@
-<div id="banner">{{text()}}</div>
+@if (text() != null && 0 < text().length) {
+  <div id="banner">{{text()}}</div>
+}

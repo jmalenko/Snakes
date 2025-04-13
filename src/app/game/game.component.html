@@ -1,6 +1,4 @@
 <main>
   <canvas #canvas id="canvas"></canvas>
-  @if (message() != null && 0 < message().length) {
-    <app-banner [text]="message()"/>
-  }
+  <app-banner [text]="message()"/>
 </main>
